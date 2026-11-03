@@ -64,10 +64,11 @@ Demo accounts (password for all: `password123`):
 ```sh
 git clone git@github.com:YaroslavPetrashko/tolchu.git
 cd tolchu
-bin/setup --skip-server   # installs gems, creates and migrates the databases
-bin/rails db:seed         # demo users, clips, bets, and settled markets
+bin/setup --skip-server   # installs gems, creates the databases, and loads the demo data (db/seeds.rb)
 bin/dev                   # http://localhost:3000
 ```
+
+`bin/rails db:seed` reloads the demo data into an empty database (it skips itself if the demo users exist).
 
 On macOS, if `bundle install` fails to link native gems with `unknown architecture arm64e.x1-macos`, point
 the compiler at the 26.x SDK: `export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk`.
