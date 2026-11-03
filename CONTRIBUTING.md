@@ -31,6 +31,9 @@ synced with `bin/github-labels`).
 
 Milestones mirror the deadlines: **Iteration 1** (Nov 9), **Iteration 2**, **Final demo**.
 
+The initial backlog lives in [`.github/backlog/`](.github/backlog/) until it's published with `bin/github-backlog`
+(needs `gh auth login`). After that, GitHub Issues are the source of truth.
+
 ## Before you push
 
 ```sh

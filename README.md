@@ -135,6 +135,10 @@ We work issue by issue, with one branch and one PR each, and every PR needs one 
 type of work, the area of the product, and the urgency against course deadlines.
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+The planned work after this iteration (38 issues: real-time odds, clip uploads, sealed results, leaderboards,
+review apps, Lighthouse CI, and more) is drafted in [`.github/backlog/`](.github/backlog/) and published to
+GitHub Issues with `bin/github-backlog`.
+
 ## Credits
 
 Demo clips are free stock footage from [Mixkit](https://mixkit.co/license/#videoFree), streamed from their CDN.

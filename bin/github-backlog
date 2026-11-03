@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+# Publishes the issue backlog in .github/backlog/ to GitHub: labels, milestones, and issues.
+#
+#   gh auth login            # once
+#   bin/github-backlog       # safe to re-run: existing labels, milestones, and issues (matched by title) are reused
+#
+# Drafts are NN-slug.md files with YAML front matter (title, labels, milestone). They refer to each other by
+# plan number ("#7"). Issues are first created with those references neutralised, then edited once every issue
+# exists, so each "#N" points at the real GitHub issue number (Dependabot PRs and other issues shift numbering).
+require "json"
+require "open3"
+require "yaml"
+
+ROOT = File.expand_path("..", __dir__)
+BACKLOG_DIR = File.join(ROOT, ".github/backlog")
+LABELS_FILE = File.join(ROOT, ".github/labels.yml")
+REFERENCE = /(?<![\w&\/`])#(\d{1,2})\b/
+MILESTONES = [
+  { "title" => "Iteration 1", "due_on" => "2026-11-10T04:59:59Z", "description" => "proj-iter1 submission (due Nov 9). P0 issues." },
+  { "title" => "Iteration 2", "description" => "proj-iter2 submission. P1 issues. Set the due date once the course posts it." },
+  { "title" => "Final demo", "description" => "Final demo and real-user testing after Thanksgiving. P2 issues." }
+].freeze
+REPLACED_DEFAULT_LABELS = %w[bug enhancement documentation].freeze
+
+def gh(*args)
+  out, err, status = Open3.capture3("gh", *args)
+  raise "gh #{args.first(2).join(' ')} failed: #{err.strip}" unless status.success?
+
+  out
+end
+
+repo = gh("repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner").strip
+
+drafts = Dir[File.join(BACKLOG_DIR, "[0-9][0-9]-*.md")].sort.map do |path|
+  _, front, body = File.read(path).split(/^---\s*$/, 3)
+  meta = YAML.safe_load(front)
+  { plan: File.basename(path)[0, 2].to_i, title: meta.fetch("title"), labels: meta.fetch("labels"),
+    milestone: meta["milestone"], body: body.strip + "\n" }
+end
+abort "No drafts in #{BACKLOG_DIR}" if drafts.empty?
+plan_numbers = drafts.map { |draft| draft[:plan] }
+puts "Publishing #{drafts.size} issues to #{repo}"
+
+puts "\n== Labels"
+YAML.load_file(LABELS_FILE).each do |label|
+  gh("label", "create", label["name"], "--repo", repo, "--color", label["color"], "--description", label["description"], "--force")
+  puts "  ✓ #{label['name']}"
+end
+REPLACED_DEFAULT_LABELS.each do |name|
+  gh("label", "delete", name, "--repo", repo, "--yes")
+  puts "  - removed GitHub default label #{name}"
+rescue RuntimeError
+  nil # already removed
+end
+
+puts "\n== Milestones"
+existing_milestones = JSON.parse(gh("api", "repos/#{repo}/milestones?state=all&per_page=100")).map { |m| m["title"] }
+MILESTONES.each do |milestone|
+  if existing_milestones.include?(milestone["title"])
+    puts "  = #{milestone['title']}"
+    next
+  end
+  gh("api", "repos/#{repo}/milestones", "-X", "POST", *milestone.flat_map { |key, value| [ "-f", "#{key}=#{value}" ] })
+  puts "  ✓ #{milestone['title']}"
+end
+
+puts "\n== Issues"
+existing = JSON.parse(gh("issue", "list", "--repo", repo, "--state", "all", "--limit", "500", "--json", "number,title"))
+numbers = {}
+drafts.each do |draft|
+  if (found = existing.find { |issue| issue["title"] == draft[:title] })
+    numbers[draft[:plan]] = found["number"]
+    puts "  = ##{found['number']} #{draft[:title]}"
+    next
+  end
+  neutral_body = draft[:body].gsub(REFERENCE) do
+    plan_numbers.include?(Regexp.last_match(1).to_i) ? "plan item #{Regexp.last_match(1)}" : Regexp.last_match(0)
+  end
+  args = [ "issue", "create", "--repo", repo, "--title", draft[:title], "--body", neutral_body ]
+  draft[:labels].each { |label| args.push("--label", label) }
+  args.push("--milestone", draft[:milestone]) if draft[:milestone]
+  numbers[draft[:plan]] = gh(*args).strip[%r{/issues/(\d+)\z}, 1].to_i
+  puts "  ✓ ##{numbers[draft[:plan]]} #{draft[:title]}"
+end
+
+puts "\n== Linking issues to each other"
+drafts.each do |draft|
+  next unless draft[:body].match?(REFERENCE)
+
+  linked = draft[:body].gsub(REFERENCE) do
+    plan = Regexp.last_match(1).to_i
+    numbers.key?(plan) ? "##{numbers[plan]}" : Regexp.last_match(0)
+  end
+  gh("issue", "edit", numbers[draft[:plan]].to_s, "--repo", repo, "--body", linked)
+  puts "  ↻ ##{numbers[draft[:plan]]}"
+end
+
+puts "\nDone: #{drafts.size} issues. Next: add collaborators, then protect main (see the P0 issue)."
