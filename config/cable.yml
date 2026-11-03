@@ -1,0 +1,9 @@
+development:
+  adapter: async
+
+test:
+  adapter: test
+
+# Postgres LISTEN/NOTIFY, so production needs no Redis add-on.
+production:
+  adapter: postgresql
