@@ -92,8 +92,9 @@ jobs:
         with:
           bundler-cache: true
 
+      # db:prepare would also run db/seeds.rb on a fresh database; tests need it empty.
       - name: Prepare database
-        run: bin/rails db:prepare
+        run: bin/rails db:create db:schema:load
 
       - name: Run RSpec
         run: bundle exec rspec
