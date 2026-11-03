@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# Creates or updates the repo's labels from .github/labels.yml.
+#
+#   bin/github-labels                    # sync labels
+#   bin/github-labels --prune-defaults   # also delete GitHub's default labels we replaced
+#
+# Requires the GitHub CLI: https://cli.github.com (run `gh auth login` first).
+require "yaml"
+
+REPLACED_DEFAULTS = %w[bug enhancement documentation].freeze
+
+labels = YAML.load_file(File.expand_path("../.github/labels.yml", __dir__))
+labels.each do |label|
+  ok = system("gh", "label", "create", label.fetch("name"),
+              "--color", label.fetch("color"), "--description", label.fetch("description"), "--force",
+              out: File::NULL)
+  puts "#{ok ? '✓' : '✗'} #{label.fetch('name')}"
+end
+
+if ARGV.include?("--prune-defaults")
+  REPLACED_DEFAULTS.each do |name|
+    system("gh", "label", "delete", name, "--yes", out: File::NULL, err: File::NULL)
+    puts "- removed default label #{name}"
+  end
+end

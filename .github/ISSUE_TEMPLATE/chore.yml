@@ -1,0 +1,23 @@
+name: Chore / tooling
+description: CI, deployment, dependencies, refactors, test infrastructure, docs
+labels: ["type: chore"]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What should be true when this is done, and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Suggested implementation
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Done when
+      placeholder: |
+        - [ ] …
+    validations:
+      required: true

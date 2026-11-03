@@ -1,0 +1,35 @@
+name: Bug
+description: Something is broken or behaves incorrectly
+labels: ["type: bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Sign in as fan@tolchu.app
+        2. …
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Local, production, or a review app URL
+  - type: textarea
+    id: notes
+    attributes:
+      label: Suspected cause or fix
+      description: Optional. Link the code you think is involved.

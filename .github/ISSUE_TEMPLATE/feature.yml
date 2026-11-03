@@ -1,0 +1,38 @@
+name: Feature
+description: A new user-facing capability
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: Who wants this, what do they want, and why?
+      placeholder: |
+        As a casual fan
+        I want …
+        So that …
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Where this fits in the current code (link files, models, services).
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Suggested implementation
+      description: Concrete steps, files to touch, migrations, gotchas.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checklist a reviewer can verify. Include the Cucumber scenario(s) to add.
+      placeholder: |
+        - [ ] …
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
