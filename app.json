@@ -1,0 +1,32 @@
+{
+  "name": "Tolchu",
+  "description": "Parimutuel micro-betting on short video clips. Know what happens next? Bet on it.",
+  "repository": "https://github.com/YaroslavPetrashko/tolchu",
+  "keywords": ["rails", "ruby", "parimutuel", "hotwire"],
+  "stack": "heroku-24",
+  "buildpacks": [{ "url": "heroku/ruby" }],
+  "formation": {
+    "web": { "quantity": 1, "size": "basic" }
+  },
+  "addons": ["heroku-postgresql:essential-0"],
+  "env": {
+    "SECRET_KEY_BASE": { "generator": "secret" },
+    "RAILS_ENV": { "value": "production" },
+    "RAILS_LOG_TO_STDOUT": { "value": "enabled" },
+    "RAILS_SERVE_STATIC_FILES": { "value": "enabled" }
+  },
+  "scripts": {
+    "postdeploy": "bin/rails db:seed"
+  },
+  "environments": {
+    "review": {
+      "formation": {
+        "web": { "quantity": 1, "size": "basic" }
+      },
+      "addons": ["heroku-postgresql:essential-0"],
+      "scripts": {
+        "postdeploy": "bin/rails db:seed"
+      }
+    }
+  }
+}
