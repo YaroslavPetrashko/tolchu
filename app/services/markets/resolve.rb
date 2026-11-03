@@ -3,7 +3,8 @@ module Markets
   # no-contest pool, credits the creator's share of the rake, and records the
   # house take. Runs once; a settled market can't be resolved again.
   class Resolve < ApplicationService
-    def initialize(market:, winning_outcome_id:, now: Time.current)
+    # `now` is for tests; by default the clock is read after the market row lock is held.
+    def initialize(market:, winning_outcome_id:, now: nil)
       @market = market
       @winning_outcome_id = winning_outcome_id
       @now = now
@@ -12,8 +13,9 @@ module Markets
     def perform
       Market.transaction do
         @market.lock!
+        now = @now || Time.current
         fail!("This market has already been settled") if @market.settled?
-        fail!("Betting is still open. Lock the market before declaring the result") unless @market.awaiting_result?(@now)
+        fail!("Betting is still open. Lock the market before declaring the result") unless @market.awaiting_result?(now)
         winner = @market.outcomes.find_by(id: @winning_outcome_id) or fail!("Pick the outcome that actually happened")
 
         bets = @market.bets.includes(:user).order(:id).to_a
@@ -22,7 +24,7 @@ module Markets
           status: :resolved,
           winning_outcome: winner,
           locked_at: @market.locked_at || @market.locks_at,
-          resolved_at: @now,
+          resolved_at: now,
           refunded: settlement.refunded?,
           house_take: settlement.house_take,
           creator_reward: settlement.creator_reward

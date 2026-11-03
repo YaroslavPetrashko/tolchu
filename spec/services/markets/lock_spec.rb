@@ -15,6 +15,15 @@ RSpec.describe Markets::Lock do
     end
   end
 
+  it "reads the clock once it holds the row lock, not when the service is built" do
+    service = described_class.new(market:)
+
+    travel 5.seconds do
+      service.call
+      expect(market.reload.locked_at).to be_within(1.second).of(Time.current)
+    end
+  end
+
   it "refuses to lock a market whose betting already closed" do
     described_class.call(market:)
 

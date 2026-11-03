@@ -77,7 +77,7 @@ the compiler at the 26.x SDK: `export SDKROOT=/Library/Developer/CommandLineTool
 
 ```sh
 bundle exec cucumber     # user stories (features/), 49 scenarios
-bundle exec rspec        # unit + request specs (spec/), 214 examples
+bundle exec rspec        # unit + request specs (spec/), 215 examples
 open coverage/index.html # merged coverage from both suites
 bin/ci                   # everything CI runs: RuboCop, Brakeman, bundler-audit, importmap audit, RSpec, Cucumber
 ```
