@@ -1,0 +1,61 @@
+<%# locals: (market:, viewer_bet:, context:, phase:) %>
+<% bettable = phase == :open && viewer_bet.nil? && Current.user && !Current.user.creator_of?(market) %>
+
+<% if bettable %>
+  <%= form_with url: market_bets_path(market), class: "bet-form",
+        data: {
+          controller: "stake",
+          action: "change->stake#update input->stake#update",
+          stake_pools_value: market.outcomes.to_h { |outcome| [ outcome.id, outcome.pool ] }.to_json,
+          stake_total_pool_value: market.total_pool,
+          stake_rake_rate_value: Parimutuel::RAKE_RATE.to_f
+        } do %>
+    <%= hidden_field_tag :context, context, id: nil %>
+    <%= render "markets/outcomes", market:, viewer_bet:, selectable: true %>
+
+    <div class="stake-row">
+      <div class="stake-chips" role="group" aria-label="Quick stakes">
+        <% Bet::QUICK_STAKES.each do |amount| %>
+          <button type="button" class="chip" data-action="stake#pick" data-stake-amount-param="<%= amount %>"><%= amount %></button>
+        <% end %>
+      </div>
+      <div class="stake-input">
+        <%= label_tag dom_id(market, :stake), "Stake" %>
+        <%= number_field_tag :stake, nil, id: dom_id(market, :stake), min: Bet::MIN_STAKE, max: Bet::MAX_STAKE, step: 1,
+              placeholder: "1–#{Bet::MAX_STAKE}", inputmode: "numeric", required: true, data: { stake_target: "input" } %>
+      </div>
+    </div>
+    <p class="bet-form__estimate" data-stake-target="estimate">Pick an outcome and a stake (max <%= Bet::MAX_STAKE %>) to see what you could win.</p>
+    <%= submit_tag "Place bet", class: "btn btn--primary btn--block", data: { countdown_target: "submit" } %>
+  <% end %>
+<% else %>
+  <%= render "markets/outcomes", market:, viewer_bet:, selectable: false %>
+
+  <div class="bet-status">
+    <% if viewer_bet %>
+      <% case viewer_bet.status.to_sym %>
+      <% when :pending %>
+        <p>You picked <strong><%= viewer_bet.outcome.label %></strong> for <%= credits(viewer_bet.stake) %>.
+          <%= phase == :open ? "Results land when the play does." : "Betting is closed. Waiting for the result." %></p>
+      <% when :won %>
+        <p class="bet-status--won">You called it! <strong><%= viewer_bet.outcome.label %></strong> paid <%= credits(viewer_bet.payout) %> (<%= signed_credits(viewer_bet.net) %>).</p>
+      <% when :lost %>
+        <p class="bet-status--lost">You picked <strong><%= viewer_bet.outcome.label %></strong> and lost <%= credits(viewer_bet.stake) %>.</p>
+      <% when :refunded %>
+        <p>Your <%= credits(viewer_bet.stake) %> on <strong><%= viewer_bet.outcome.label %></strong> was refunded.</p>
+      <% end %>
+    <% elsif phase == :open && Current.user.nil? %>
+      <%= link_to "Sign in to predict", new_session_path, class: "btn btn--primary btn--block" %>
+    <% elsif phase == :open %>
+      <p>You created this market, so you can't bet on it. <%= link_to "Manage it in Studio", studio_markets_path %></p>
+    <% elsif phase == :locked %>
+      <p>Betting closed. Waiting for the result.</p>
+    <% end %>
+
+    <% if phase == :resolved %>
+      <p class="bet-status__result">Result: <strong><%= market.winning_outcome.label %></strong><%= ". No contest, so all stakes were refunded" if market.refunded? %></p>
+    <% elsif phase == :cancelled %>
+      <p class="bet-status__result">This market was cancelled and every stake was refunded.</p>
+    <% end %>
+  </div>
+<% end %>

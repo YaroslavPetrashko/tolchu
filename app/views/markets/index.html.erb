@@ -1,0 +1,19 @@
+<% content_for :body_class, "is-feed" %>
+
+<div class="feed">
+  <% if @feed.markets.any? %>
+    <% @feed.markets.each do |market| %>
+      <%= render "markets/market", market:, viewer_bet: @feed.bet_for(market), context: "feed" %>
+    <% end %>
+    <section class="feed-end">
+      <p>You're all caught up.</p>
+      <%= link_to "Post your own clip", new_studio_market_path, class: "btn btn--ghost" %>
+    </section>
+  <% else %>
+    <section class="empty-state">
+      <h1>No clips yet</h1>
+      <p>Be the first: post a clip and ask the crowd what happens next.</p>
+      <%= link_to "Post a market", new_studio_market_path, class: "btn btn--primary" %>
+    </section>
+  <% end %>
+</div>

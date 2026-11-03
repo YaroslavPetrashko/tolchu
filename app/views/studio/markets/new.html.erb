@@ -1,0 +1,58 @@
+<% content_for :title, "New market" %>
+
+<div class="page page--narrow">
+  <header class="page-header">
+    <div>
+      <h1>New market</h1>
+      <p class="muted">Pick the moment right before the action and give viewers 2–4 ways it could go.</p>
+    </div>
+  </header>
+
+  <%= form_with model: @market, url: studio_markets_path, class: "stack-form" do |form| %>
+    <%= render "shared/form_errors", record: @market %>
+
+    <div class="field">
+      <%= form.label :question %>
+      <%= form.text_field :question, placeholder: "Will she stick the landing?", maxlength: 140, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :video_url, "Clip URL" %>
+      <%= form.text_field :video_url, placeholder: "https://example.com/clip.mp4", inputmode: "url", required: true %>
+      <p class="hint">A direct link to an MP4 or WebM file. The best clips are under 20 seconds.</p>
+    </div>
+
+    <div class="field">
+      <%= form.label :freeze_at, "Freeze the clip at (seconds)" %>
+      <%= form.number_field :freeze_at, step: 0.1, min: 0 %>
+      <p class="hint">The instant before the action. Viewers watch up to here, then predict. The rest plays once you declare the result.</p>
+    </div>
+
+    <fieldset class="field">
+      <legend>Outcomes</legend>
+      <div class="outcome-fields">
+        <%= form.fields_for :outcomes do |outcome_form| %>
+          <div class="field">
+            <%= outcome_form.label :label, "Outcome #{outcome_form.index + 1}" %>
+            <%= outcome_form.text_field :label, maxlength: 40,
+                  placeholder: [ "Sticks it", "Wipes out", "Bails before takeoff", "Something wild" ][outcome_form.index] %>
+          </div>
+        <% end %>
+      </div>
+      <p class="hint">Fill in at least two. Leave the rest blank.</p>
+    </fieldset>
+
+    <div class="field">
+      <%= form.label :betting_window_minutes, "Betting window" %>
+      <%= form.select :betting_window_minutes, Market::BETTING_WINDOWS %>
+      <p class="hint">Betting locks automatically when the window ends. You can also lock it early from the studio.</p>
+    </div>
+
+    <div class="field">
+      <%= form.label :description, "Context (optional)" %>
+      <%= form.text_area :description, rows: 3, maxlength: 500 %>
+    </div>
+
+    <%= form.submit "Publish market", class: "btn btn--primary btn--block" %>
+  <% end %>
+</div>

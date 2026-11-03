@@ -1,0 +1,52 @@
+<%# locals: (market:) %>
+<% phase = market.phase %>
+<%= tag.article id: dom_id(market, :studio), class: [ "studio-card", "studio-card--#{phase}" ] do %>
+  <header class="studio-card__header">
+    <%= phase_badge(market) %>
+    <h2 class="studio-card__question"><%= link_to market.question, market_path(market) %></h2>
+  </header>
+
+  <p class="studio-card__meta">
+    <%= credits(market.total_pool) %> pool · <%= pluralize(market.bets_count, "prediction") %> · <%= lock_status_text(market) %>
+  </p>
+
+  <ul class="studio-card__outcomes" role="list">
+    <% market.outcomes.each do |outcome| %>
+      <li class="<%= "is-winner" if outcome.winner? %>">
+        <span><%= outcome.label %><%= " ✓" if outcome.winner? %></span>
+        <span class="muted"><%= credits(outcome.pool) %> (<%= percent(outcome.share_of_pool) %>)</span>
+      </li>
+    <% end %>
+  </ul>
+
+  <% case phase %>
+  <% when :open %>
+    <div class="studio-card__actions">
+      <%= button_to "Lock betting now", lock_studio_market_path(market), method: :patch, class: "btn btn--primary" %>
+      <%= button_to "Cancel market", cancel_studio_market_path(market), method: :patch, class: "btn btn--ghost",
+                    form: { data: { turbo_confirm: "Cancel this market and refund every stake?" } } %>
+    </div>
+  <% when :locked %>
+    <%= form_with url: resolve_studio_market_path(market), method: :patch, class: "resolve-form" do |form| %>
+      <%= form.label :winning_outcome_id, "What happened?", for: dom_id(market, :winning_outcome) %>
+      <div class="resolve-form__row">
+        <%= form.select :winning_outcome_id, market.outcomes.map { |outcome| [ outcome.label, outcome.id ] },
+                        { include_blank: "Pick the result…" }, id: dom_id(market, :winning_outcome), required: true %>
+        <%= form.submit "Declare result", class: "btn btn--primary" %>
+      </div>
+    <% end %>
+    <div class="studio-card__actions">
+      <%= button_to "Cancel market", cancel_studio_market_path(market), method: :patch, class: "btn btn--ghost",
+                    form: { data: { turbo_confirm: "Cancel this market and refund every stake?" } } %>
+    </div>
+  <% when :resolved %>
+    <dl class="settlement">
+      <div><dt>Result</dt><dd><%= market.winning_outcome.label %><%= " (no contest, refunded)" if market.refunded? %></dd></div>
+      <div><dt>House fee</dt><dd><%= credits(market.house_take) %></dd></div>
+      <div><dt>Your reward</dt><dd><%= credits(market.creator_reward) %></dd></div>
+      <div><dt>Contest score</dt><dd><%= percent(market.contest_score) %></dd></div>
+    </dl>
+  <% when :cancelled %>
+    <p class="muted">Cancelled. Every stake was refunded.</p>
+  <% end %>
+<% end %>

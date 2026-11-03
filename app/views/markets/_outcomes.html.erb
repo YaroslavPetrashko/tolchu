@@ -1,0 +1,26 @@
+<%# locals: (market:, viewer_bet:, selectable:) %>
+<ul class="outcomes" role="list">
+  <% market.outcomes.each do |outcome| %>
+    <%= tag.li class: class_names("outcome", "outcome--selectable": selectable, "outcome--winner": outcome.winner?,
+                                 "outcome--picked": viewer_bet&.outcome_id == outcome.id),
+               style: "--share: #{percent(outcome.share_of_pool)}" do %>
+      <% if selectable %>
+        <label class="outcome__label outcome__hit">
+          <%= radio_button_tag :outcome_id, outcome.id, false, id: dom_id(outcome, :pick), class: "outcome__radio", required: true %>
+          <span><%= outcome.label %></span>
+        </label>
+      <% else %>
+        <span class="outcome__label"><%= outcome.label %></span>
+      <% end %>
+      <span class="outcome__stats">
+        <% if outcome.winner? %>
+          <span class="outcome__winner">Winner</span>
+        <% end %>
+        <span class="outcome__share"><%= percent(outcome.share_of_pool) %></span>
+        <% if market.phase == :open %>
+          <span class="outcome__odds" title="Projected payout per credit if this happens"><%= multiplier(market.projected_multiplier(outcome)) %></span>
+        <% end %>
+      </span>
+    <% end %>
+  <% end %>
+</ul>

@@ -1,0 +1,63 @@
+<% content_for :title, "How it works" %>
+
+<div class="page page--narrow prose">
+  <h1>Know what happens next? Bet on it.</h1>
+  <p class="lead">
+    Tolchu turns short clips into tiny prediction markets. Watch the setup, call the next moment,
+    and see the result play out a few seconds later.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <h2>Watch the clip</h2>
+      <p>Every clip freezes right before the action: the free throw, the kickflip, the penalty kick. Everything you need to know is on screen.</p>
+    </li>
+    <li>
+      <h2>Make your call</h2>
+      <p>Pick one of 2–4 outcomes and stake up to <%= credits(Bet::MAX_STAKE) %>. Betting locks before the play starts, so nobody gets to bet on something they've already seen.</p>
+    </li>
+    <li>
+      <h2>Win from the pool</h2>
+      <p>Everyone's stakes go into one shared pool. When the result is in, the correct predictions split it in proportion to what they staked.</p>
+    </li>
+  </ol>
+
+  <h2>The house never bets against you</h2>
+  <p>
+    Sportsbooks set odds and profit when you lose. Tolchu is <strong>parimutuel</strong>: the house takes a flat
+    <strong>5% fee</strong> from the pool and has no stake in the outcome. The odds come from the crowd.
+    The more people back an outcome, the smaller its payout.
+  </p>
+
+  <h2>A worked example</h2>
+  <div class="example-card">
+    <p>“Will the free throw go in?”</p>
+    <ul>
+      <li>Alice stakes <strong>100</strong> on <em>Swish</em></li>
+      <li>Bob stakes <strong>50</strong> on <em>Swish</em></li>
+      <li>Carol stakes <strong>50</strong> on <em>Brick</em></li>
+    </ul>
+    <p>
+      The pool is <strong>200</strong>. The 5% fee is <strong>10</strong>, leaving <strong>190</strong>.
+      It's a swish, so Alice gets <strong>126</strong> (she put in ⅔ of the winning money)
+      and Bob gets <strong>63</strong>. Payouts are rounded down. The leftover credit goes to the house.
+    </p>
+  </div>
+
+  <h2>Fair-play rules</h2>
+  <ul>
+    <li><strong>Stake cap:</strong> at most <%= credits(Bet::MAX_STAKE) %> per market, so no one can swing a pool on their own.</li>
+    <li><strong>Hard lock:</strong> bets are refused the instant a market locks, even from a page that was already open.</li>
+    <li><strong>No contest, no fee:</strong> if nobody picked the winner, or nobody bet against it, every stake is refunded in full.</li>
+    <li><strong>Winners never lose money:</strong> the fee is capped at what the losing side staked.</li>
+    <li><strong>Creators can't bet</strong> on their own markets.</li>
+  </ul>
+
+  <h2>For creators</h2>
+  <p>
+    Post a clip from the <%= link_to "studio", studio_markets_path %> and you earn up to <strong>half of the fee</strong> on your market.
+    The more evenly the crowd splits, the bigger your cut, so the best clips are the ones that are hard to call.
+  </p>
+
+  <p class="muted">Tolchu uses free play-money credits. Every new account starts with <%= credits(User::STARTING_CREDITS) %>.</p>
+</div>

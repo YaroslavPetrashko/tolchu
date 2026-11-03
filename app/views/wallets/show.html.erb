@@ -1,0 +1,57 @@
+<% content_for :title, "Wallet" %>
+
+<div class="page">
+  <header class="wallet-hero">
+    <div class="wallet-hero__top">
+      <div>
+        <p class="muted">@<%= @user.username %> · Balance</p>
+        <p class="wallet-hero__balance"><%= @user.balance.to_fs(:delimited) %> <span class="wallet-hero__unit">credits</span></p>
+      </div>
+      <%= button_to "Sign out", session_path, method: :delete, class: "btn btn--ghost btn--small" %>
+    </div>
+    <dl class="wallet-stats">
+      <div><dt>Pending</dt><dd><%= @bets.count(&:pending?) %></dd></div>
+      <div><dt>Won</dt><dd><%= @bets.count(&:won?) %></dd></div>
+      <div><dt>Lost</dt><dd><%= @bets.count(&:lost?) %></dd></div>
+      <div><dt>Net</dt><dd><%= signed_credits(@settled_bets.sum(&:net)) %></dd></div>
+    </dl>
+  </header>
+
+  <section class="page-section" aria-labelledby="predictions-heading">
+    <h2 id="predictions-heading">Your predictions</h2>
+    <% if @bets.any? %>
+      <ul class="bet-list" role="list">
+        <% @bets.each do |bet| %>
+          <li id="<%= dom_id(bet) %>" class="bet-row bet-row--<%= bet.status %>">
+            <div>
+              <%= link_to bet.market.question, market_path(bet.market), class: "bet-row__question" %>
+              <p class="muted">You picked <strong><%= bet.outcome.label %></strong> · <%= credits(bet.stake) %></p>
+            </div>
+            <span class="bet-row__status"><%= bet_status_label(bet) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="muted">No predictions yet. <%= link_to "Find a clip to call", root_path %>.</p>
+    <% end %>
+  </section>
+
+  <section class="page-section" aria-labelledby="activity-heading">
+    <h2 id="activity-heading">Activity</h2>
+    <table class="data-table ledger">
+      <thead>
+        <tr><th scope="col">When</th><th scope="col">What</th><th scope="col">Amount</th><th scope="col">Balance</th></tr>
+      </thead>
+      <tbody>
+        <% @entries.each do |entry| %>
+          <tr id="<%= dom_id(entry) %>">
+            <td><time datetime="<%= entry.created_at.iso8601 %>"><%= l(entry.created_at, format: :short) %></time></td>
+            <td><%= entry.description %></td>
+            <td class="<%= entry.amount.positive? ? "amount--up" : "amount--down" %>"><%= signed_credits(entry.amount) %></td>
+            <td><%= entry.balance_after.to_fs(:delimited) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+</div>

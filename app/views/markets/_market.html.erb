@@ -1,0 +1,36 @@
+<%# locals: (market:, viewer_bet: nil, context: "feed") %>
+<% phase = market.phase %>
+<%= tag.article id: dom_id(market),
+      class: [ "clip-card", "clip-card--#{phase}" ],
+      data: {
+        controller: "clip countdown",
+        clip_freeze_at_value: market.freeze_at.to_f,
+        clip_revealed_value: phase == :resolved,
+        countdown_locks_at_value: market.locks_at.iso8601,
+        countdown_live_value: phase == :open
+      } do %>
+  <div class="clip-card__media">
+    <video class="clip-card__video" src="<%= market.video_url %>" muted playsinline preload="metadata"
+           data-clip-target="video"
+           data-action="timeupdate->clip#enforceFreeze seeking->clip#enforceFreeze ended->clip#ended"
+           aria-label="Clip for: <%= market.question %>"></video>
+    <div class="clip-card__prompt" aria-hidden="true">What happens next?</div>
+    <div class="clip-card__hud">
+      <%= phase_badge(market) %>
+      <span class="clip-card__countdown" data-countdown-target="label"><%= lock_status_text(market) %></span>
+    </div>
+    <div class="clip-card__controls">
+      <button type="button" class="icon-btn" data-action="clip#replay" aria-label="Replay clip">↺</button>
+      <button type="button" class="icon-btn" data-action="clip#toggleSound" data-clip-target="soundButton" aria-label="Unmute clip">🔇</button>
+    </div>
+  </div>
+
+  <div class="clip-card__body">
+    <p class="clip-card__byline">@<%= market.creator.username %> asks</p>
+    <h2 class="clip-card__question"><%= link_to market.question, market_path(market) %></h2>
+    <p class="clip-card__pool">
+      <strong><%= credits(market.total_pool) %></strong> in the pool · <%= pluralize(market.bets_count, "prediction") %>
+    </p>
+    <%= render "markets/bet_panel", market:, viewer_bet:, context:, phase: %>
+  </div>
+<% end %>

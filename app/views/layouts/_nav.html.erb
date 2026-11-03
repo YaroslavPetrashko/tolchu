@@ -1,0 +1,27 @@
+<header class="topbar">
+  <%= link_to root_path, class: "brand", aria: { label: "Tolchu home" } do %>
+    <span class="brand__mark" aria-hidden="true">▶</span><span class="brand__name">tolchu</span>
+  <% end %>
+
+  <nav class="topbar__links" aria-label="Main">
+    <%= link_to "Feed", root_path, class: class_names("topbar__link", "is-active": current_page?(root_path)) %>
+    <%= link_to "How it works", how_it_works_path, class: class_names("topbar__link", "is-active": current_page?(how_it_works_path)) %>
+    <% if Current.user %>
+      <%= link_to "Studio", studio_markets_path, class: class_names("topbar__link", "is-active": controller_path.start_with?("studio")) %>
+    <% end %>
+  </nav>
+
+  <div class="topbar__account">
+    <% if Current.user %>
+      <%= link_to wallet_path, class: "balance-pill", title: "Your wallet" do %>
+        <span class="balance-pill__coin" aria-hidden="true">◎</span>
+        <span id="wallet-balance"><%= Current.user.balance.to_fs(:delimited) %></span>
+        <span class="visually-hidden">credits</span>
+      <% end %>
+      <%= button_to "Sign out", session_path, method: :delete, class: "btn btn--ghost btn--small", form_class: "topbar__signout" %>
+    <% else %>
+      <%= link_to "Sign in", new_session_path, class: "btn btn--ghost btn--small" %>
+      <%= link_to "Sign up", new_registration_path, class: "btn btn--primary btn--small" %>
+    <% end %>
+  </div>
+</header>

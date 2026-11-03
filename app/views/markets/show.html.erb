@@ -1,0 +1,44 @@
+<% content_for :title, @market.question %>
+
+<div class="single-clip">
+  <%= render "markets/market", market: @market, viewer_bet: @viewer_bet, context: "page" %>
+
+  <section class="market-details" aria-labelledby="pool-heading">
+    <h2 id="pool-heading">Pool breakdown</h2>
+    <table class="data-table">
+      <thead>
+        <tr><th scope="col">Outcome</th><th scope="col">Staked</th><th scope="col">Share</th></tr>
+      </thead>
+      <tbody>
+        <% @market.outcomes.each do |outcome| %>
+          <tr class="<%= "is-winner" if outcome.winner? %>">
+            <td><%= outcome.label %><%= " ✓" if outcome.winner? %></td>
+            <td><%= credits(outcome.pool) %></td>
+            <td><%= percent(outcome.share_of_pool) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if @market.resolved? %>
+      <h2>Settlement</h2>
+      <dl class="settlement">
+        <div><dt>Total pool</dt><dd><%= credits(@market.total_pool) %></dd></div>
+        <div><dt>House fee</dt><dd><%= credits(@market.house_take) %></dd></div>
+        <div><dt>Creator reward</dt><dd><%= credits(@market.creator_reward) %></dd></div>
+        <div><dt>Contest score</dt><dd><%= percent(@market.contest_score) %></dd></div>
+      </dl>
+    <% end %>
+
+    <% if @market.description.present? %>
+      <h2>Context</h2>
+      <p><%= @market.description %></p>
+    <% end %>
+
+    <p class="muted fine-print">
+      Posted by @<%= @market.creator.username %>.
+      Betting <%= @market.accepting_bets? ? "closes" : "closed" %> <time datetime="<%= @market.locks_at.iso8601 %>"><%= l(@market.locks_at, format: :long) %></time>.
+      <%= link_to "How payouts work", how_it_works_path %>
+    </p>
+  </section>
+</div>

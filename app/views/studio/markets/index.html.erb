@@ -1,0 +1,26 @@
+<% content_for :title, "Studio" %>
+
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Creator studio</h1>
+      <p class="muted">
+        Post a clip, lock betting right before the play, then declare what happened.
+        You earn up to half of the 5% house fee. The more evenly the crowd splits, the bigger your cut.
+      </p>
+    </div>
+    <%= link_to "New market", new_studio_market_path, class: "btn btn--primary" %>
+  </header>
+
+  <% if @markets.any? %>
+    <div class="studio-list">
+      <%= render partial: "studio/markets/market", collection: @markets, as: :market %>
+    </div>
+  <% else %>
+    <section class="empty-state empty-state--inline">
+      <h2>No markets yet</h2>
+      <p>Got a clip where something is about to happen? Turn it into a market.</p>
+      <%= link_to "Create your first market", new_studio_market_path, class: "btn btn--primary" %>
+    </section>
+  <% end %>
+</div>
