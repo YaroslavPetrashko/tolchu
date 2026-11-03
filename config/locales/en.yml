@@ -1,0 +1,20 @@
+en:
+  activerecord:
+    attributes:
+      user:
+        email_address: "Email"
+        password_confirmation: "Password confirmation"
+      market:
+        video_url: "Clip URL"
+        freeze_at: "Freeze point"
+        locks_at: "Betting deadline"
+        betting_window_minutes: "Betting window"
+        outcomes: "Outcomes"
+      outcome:
+        label: "Outcome"
+      bet:
+        stake: "Stake"
+  time:
+    formats:
+      short: "%b %-d, %-I:%M %p"
+      long: "%B %-d, %Y at %-I:%M %p %Z"
