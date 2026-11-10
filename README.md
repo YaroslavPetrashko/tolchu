@@ -82,7 +82,7 @@ open coverage/index.html # merged coverage from both suites
 bin/ci                   # everything CI runs: RuboCop, Brakeman, bundler-audit, importmap audit, RSpec, Cucumber
 ```
 
-Coverage at the time of this submission: **97.5% of lines and 91.8% of branches** (RSpec and Cucumber combined).
+Coverage at the time of this submission: **99.4% of lines and 91.8% of branches** (RSpec and Cucumber combined).
 
 ### User stories (Cucumber)
 
