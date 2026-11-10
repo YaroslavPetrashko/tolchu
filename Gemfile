@@ -42,7 +42,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # Testing: RSpec for unit/request specs, FactoryBot for test data
-  gem "rspec-rails", "~> 8.0"
+  gem "rspec-rails", "~> 8.1"
   gem "factory_bot_rails"
 end
 
