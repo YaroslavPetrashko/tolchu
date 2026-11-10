@@ -31,7 +31,7 @@ GEM
       rack-session (>= 1.0.1)
       rack-test (>= 0.6.3)
       rails-dom-testing (~> 2.2)
-      rails-html-sanitizer (~> 1.6, >= 1.7.2)
+      rails-html-sanitizer (~> 1.6)
       useragent (~> 0.16)
     actiontext (8.1.4.1)
       action_text-trix (~> 2.1.15)
