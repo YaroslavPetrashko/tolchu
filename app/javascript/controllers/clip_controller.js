@@ -42,8 +42,9 @@ export default class extends Controller {
   }
 
   enforceFreeze() {
-    if (this.revealedValue || this.freezeAtValue <= 0) return
-    if (this.videoTarget.currentTime >= this.freezeAtValue) this.freeze()
+    if (this.revealedValue) return
+    const point = this.freezePoint
+    if (point !== null && this.videoTarget.currentTime >= point) this.freeze()
   }
 
   ended() {
@@ -55,7 +56,8 @@ export default class extends Controller {
     if (!video.requestVideoFrameCallback) return
 
     const check = (_now, metadata) => {
-      if (!this.revealedValue && this.freezeAtValue > 0 && metadata.mediaTime >= this.freezeAtValue) this.freeze()
+      const point = this.freezePoint
+      if (!this.revealedValue && point !== null && metadata.mediaTime >= point) this.freeze()
       this.frameHandle = video.requestVideoFrameCallback(check)
     }
     this.frameHandle = video.requestVideoFrameCallback(check)
@@ -64,8 +66,19 @@ export default class extends Controller {
   freeze() {
     const video = this.videoTarget
     video.pause()
-    if (Math.abs(video.currentTime - this.freezeAtValue) > 0.05) video.currentTime = this.freezeAtValue
+    const point = this.freezePoint
+    if (point !== null && Math.abs(video.currentTime - point) > 0.05) video.currentTime = point
     this.element.classList.add("is-frozen")
+  }
+
+  // Where an unsettled clip stops, whether betting is open or closed: the creator's freeze
+  // point, or the halfway mark when none was set (or it falls past the end), so the ending
+  // is never shown before the result.
+  get freezePoint() {
+    const duration = this.videoTarget.duration
+    const known = Number.isFinite(duration) && duration > 0
+    if (this.freezeAtValue > 0 && !(known && this.freezeAtValue >= duration)) return this.freezeAtValue
+    return known ? duration / 2 : null
   }
 
   get isFrozen() {
