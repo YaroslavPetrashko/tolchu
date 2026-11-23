@@ -53,7 +53,8 @@ Demo accounts (password for all: `password123`):
 
 - Accounts: sign up (1,000 starting credits), sign in/out, protected pages
 - Clip feed: one card per screen, live markets closing soonest first, then markets awaiting a result, then recent
-  results. Each clip freezes before the action and reveals the ending once settled.
+  results. Each clip freezes before the action (at its halfway mark if the creator set no freeze point) and reveals
+  the ending once settled.
 - Bet pad: flick to bet, tap or hold to set the stake, live multipliers and payout estimates, a draining lock ring,
   and review screens framed green, red or yellow with a pill showing your pick, stake and multiplier
 - Betting: one prediction per market (changeable until the lock), 1–100 credit stake cap, atomic wallet debit,
@@ -121,7 +122,7 @@ Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined)
 |---|---|
 | `features/accounts/sign_up.feature` | Sign up and get 1,000 starting credits, with validation for duplicates and weak passwords |
 | `features/accounts/sign_in.feature` | Sign in/out, wrong password, protected pages redirect and return |
-| `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
+| `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action (or at its halfway mark when no freeze point is set), stays frozen once betting closes, plays through once settled, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
 | `features/feed/browse_feed.feature` | Scroll clips with question, outcomes, and pool split. Ordering, locked and settled states, guests |
 | `features/betting/place_bet.feature` | Placing a prediction, stake cap, insufficient credits, one bet per market, hard lock, no self-betting |
 | `features/betting/payouts.feature` | Pro-rata payouts, fee cap, no-contest refunds, creator reward scaled by contest score |

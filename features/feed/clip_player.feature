@@ -13,6 +13,39 @@ Feature: Watch a clip and bet in a real browser
     Then the clip for "Will he land the kickflip?" should freeze at 1.0 second
     And the clip for "Will he land the kickflip?" should still be frozen a moment later
 
+  Scenario: A clip with no freeze point stops at its halfway mark
+    Given the clip for "Will he land the kickflip?" has no freeze point
+    When I go to the feed
+    Then the clip for "Will he land the kickflip?" should freeze at 1.5 seconds
+    And the clip for "Will he land the kickflip?" should still be frozen a moment later
+
+  Scenario: A freeze point past the end of the clip also falls back to halfway
+    Given the clip for "Will he land the kickflip?" has a freeze point of 10.0 seconds
+    When I go to the feed
+    Then the clip for "Will he land the kickflip?" should freeze at 1.5 seconds
+
+  Scenario: Replaying a clip with no freeze point stops at halfway again
+    Given the clip for "Will he land the kickflip?" has no freeze point
+    When I go to the feed
+    Then the clip for "Will he land the kickflip?" should freeze at 1.5 seconds
+    When I replay the clip for "Will he land the kickflip?"
+    Then the clip for "Will he land the kickflip?" should freeze at 1.5 seconds
+
+  Scenario: Once betting has closed the clip follows the same rule, with no way to bet
+    Given the clip for "Will he land the kickflip?" has no freeze point
+    And betting has closed on "Will he land the kickflip?"
+    And I am signed in as "fan"
+    When I go to the feed
+    Then the clip for "Will he land the kickflip?" should freeze at 1.5 seconds
+    And the clip for "Will he land the kickflip?" should still be frozen a moment later
+    And "Will he land the kickflip?" should not take bets
+
+  Scenario: A settled clip plays through to the ending
+    Given the clip for "Will he land the kickflip?" has no freeze point
+    And "Will he land the kickflip?" has been settled as "Lands it"
+    When I go to the feed
+    Then the clip for "Will he land the kickflip?" should play through to the end
+
   Scenario: Betting closes on screen when the countdown hits zero
     Given I am signed in as "fan"
     And "Will he land the kickflip?" locks in 4 seconds
