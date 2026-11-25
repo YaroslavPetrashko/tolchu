@@ -51,7 +51,9 @@ RSpec.describe "Bets" do
 
       expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       expect(response.body).to include(%(<turbo-stream action="replace" target="market_#{market.id}">))
-      expect(response.body).to include(%(<turbo-stream action="update" target="wallet-balance"><template>950</template>))
+      wallet = Nokogiri::HTML5.fragment(response.body).at_css('turbo-stream[action="replace"][target="wallet-balance"] template #wallet-balance')
+      expect(wallet.text).to eq("950")
+      expect(wallet["data-wallet-balance-amount-value"]).to eq("950")
       expect(response.body).to include(%(<turbo-stream action="replace" target="session-strip">), %(class="session-tile session-tile--pending"))
       expect(response.body).to include(%(title="Lands it">Lands it</button>))
       expect(response.body).not_to include(%(target="flash"))
@@ -86,6 +88,22 @@ RSpec.describe "Bets" do
 
         expect(response).to have_http_status(:unprocessable_entity)
         expect(bet.reload.stake).to eq(50)
+      end
+
+      context "when all available credits were staked" do
+        let(:fan) { create(:user, balance: 50) }
+
+        it "publishes the released credits and matching edit bounds together" do
+          change(stake: 30)
+
+          fragment = Nokogiri::HTML5.fragment(response.body)
+          wallet = fragment.at_css('turbo-stream[target="wallet-balance"] #wallet-balance')
+          form = fragment.at_css("form.bet-pad--live")
+          expect(wallet["data-wallet-balance-amount-value"]).to eq("20")
+          expect(form["data-bet-pad-max-value"]).to eq("50")
+          expect(form.at_css('input[name="stake"]')["max"]).to eq("50")
+          expect(fan.reload.balance).to eq(20)
+        end
       end
 
       it "can't touch someone else's bet" do

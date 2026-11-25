@@ -51,9 +51,10 @@ class BetsController < ApplicationController
 
     def render_card_update(bet)
       market = Market.includes(:creator, :outcomes, :winning_outcome).find(@market.id)
+      user = Current.user.reload
       render turbo_stream: [
         turbo_stream.replace(market, partial: "markets/market", locals: { market:, viewer_bet: bet, context: return_context }),
-        turbo_stream.update("wallet-balance", Current.user.reload.balance.to_fs(:delimited)),
+        turbo_stream.replace("wallet-balance", partial: "layouts/wallet_balance", locals: { user: }),
         turbo_stream.replace("session-strip", partial: "markets/session_strip")
       ]
     end

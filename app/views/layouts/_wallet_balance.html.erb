@@ -1,0 +1,3 @@
+<%# locals: (user:) %>
+<%= tag.span user.balance.to_fs(:delimited), id: "wallet-balance",
+      data: { controller: "wallet-balance", wallet_balance_amount_value: user.balance } %>

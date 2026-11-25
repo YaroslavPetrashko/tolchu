@@ -126,6 +126,7 @@ Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined)
 | `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
 | `features/feed/browse_feed.feature` | Scroll clips with question, outcomes, and pool split. Ordering, locked and settled states, guests |
 | `features/betting/place_bet.feature` | Placing a prediction, stake cap, insufficient credits, one bet per market, hard lock, no self-betting |
+| `features/betting/pad_recovery.feature` | Recover from invalid input and lost connections, honor available credits across loaded cards, and reuse a stake when editing |
 | `features/betting/payouts.feature` | Pro-rata payouts, fee cap, no-contest refunds, creator reward scaled by contest score |
 | `features/studio/create_market.feature` | Creators post a clip market with a sealed answer, with validation |
 | `features/studio/settle_market.feature` | Lock before the play, declare the result, auto-lock, cancel and refund, only manage your own markets |

@@ -79,7 +79,8 @@ RSpec.describe "Markets" do
       sign_in_as create(:user, balance: 1_000)
       get root_path
 
-      expect(response.body).to include("account-sheet__handle", %(<span id="wallet-balance">1,000</span>))
+      expect(response.body).to include("account-sheet__handle")
+      expect(Nokogiri::HTML5.fragment(response.body).at_css("#wallet-balance").text).to eq("1,000")
       expect(response.body).to include(%(href="/wallet"), %(href="/studio/markets"), %(href="/how-it-works"), "Sign out")
     end
 
