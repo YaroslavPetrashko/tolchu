@@ -130,6 +130,7 @@ Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined)
 | `features/betting/payouts.feature` | Pro-rata payouts, fee cap, no-contest refunds, creator reward scaled by contest score |
 | `features/studio/create_market.feature` | Creators post a clip market with a sealed answer, with validation |
 | `features/studio/settle_market.feature` | Lock before the play, declare the result, auto-lock, cancel and refund, only manage your own markets |
+| `features/studio/sealed_result.feature` | Automatically pay the published sealed answer at the deadline or after an early lock |
 | `features/wallet/track_predictions.feature` | Pending and settled predictions, a ledger entry for every credit movement |
 | `features/learn/how_it_works.feature` | Plain-English explainer of the parimutuel model |
 

@@ -168,6 +168,44 @@ RSpec.describe "Studio markets" do
         expect(market.reload).to be_open
       end
 
+      context "with a sealed answer" do
+        let(:market) { create(:market, creator:, sealed_answer_label: "Lands it") }
+
+        [ :early_lock, :deadline, :expired ].each do |phase|
+          it "rejects a different result at #{phase}, then pays the sealed winner" do
+            patch lock_studio_market_path(market) if phase == :early_lock
+            market.reload
+            now = case phase
+            when :early_lock then Time.current
+            when :expired then market.locks_at + 1.second
+            else market.locks_at
+            end
+            state = -> {
+              [ market.reload.attributes, market.outcomes.map(&:attributes), market.bets.order(:id).map(&:attributes),
+                User.order(:id).pluck(:id, :balance), LedgerEntry.order(:id).map(&:attributes) ]
+            }
+            before_resolution = state.call
+
+            travel_to(now, with_usec: true) do
+              patch resolve_studio_market_path(market), params: { winning_outcome_id: outcome(market, "Bails").id }
+
+              expect(response).to redirect_to(studio_markets_path)
+              expect(response).to have_http_status(:see_other)
+              expect(flash[:alert]).to eq("The result must match the sealed answer")
+              expect(state.call).to eq(before_resolution)
+
+              patch resolve_studio_market_path(market), params: { winning_outcome_id: outcome(market, "Lands it").id }
+
+              expect(flash[:notice]).to eq("Result declared: Lands it. Payouts sent!")
+              expect(market.reload).to have_attributes(status: "resolved", winning_outcome: outcome(market, "Lands it"))
+              expect(User.find_by!(username: "alice").balance).to eq(1_090)
+              expect(User.find_by!(username: "bob").balance).to eq(900)
+              expect(creator.reload.balance).to eq(5)
+            end
+          end
+        end
+      end
+
       it "cancels and refunds" do
         patch cancel_studio_market_path(market)
 

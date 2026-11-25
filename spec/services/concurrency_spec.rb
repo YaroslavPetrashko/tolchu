@@ -91,6 +91,33 @@ RSpec.describe "Betting under real concurrency", :concurrency do
       expect_ledger_to_match_balances
     end
 
+    [ "Lands it", "Bails" ].each do |manual_winner|
+      it "settles only the sealed answer once when automatic settlement races a manual #{manual_winner} result" do
+        market.outcomes.find(winner_id).update!(sealed_winner: true)
+        manual_winner_id = outcome(market, manual_winner).id
+
+        results = in_parallel(2) do |index|
+          if index.zero?
+            Markets::SettleSealed.call(scope: Market.where(id: market.id))
+          else
+            Markets::Resolve.call(market: Market.find(market.id), winning_outcome_id: manual_winner_id)
+          end
+        end
+
+        automatic, manual = results
+        expect(automatic).to be_success
+        expect(automatic.value + (manual.success? ? 1 : 0)).to eq(1)
+        expect(manual).to be_failure if manual_winner == "Bails"
+        expect(market.reload).to have_attributes(status: "resolved", winning_outcome_id: winner_id)
+        expect(market.bets.where(outcome_id: winner_id).pluck(:status, :payout)).to eq([ [ "won", 95 ], [ "won", 95 ] ])
+        expect(market.bets.where.not(outcome_id: winner_id).pluck(:status, :payout)).to eq([ [ "lost", 0 ], [ "lost", 0 ] ])
+        expect(LedgerEntry.where(market:, kind: :payout).count).to eq(2)
+        expect(LedgerEntry.where(market:, kind: :creator_reward).count).to eq(1)
+        expect_credits_conserved(market)
+        expect_ledger_to_match_balances
+      end
+    end
+
     it "either pays out or refunds, never both, when declaring races cancelling" do
       results = in_parallel(2) do |index|
         fresh = Market.find(market.id)
