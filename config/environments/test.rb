@@ -26,6 +26,9 @@ Rails.application.configure do
   config.consider_all_requests_local = true
   config.cache_store = :null_store
 
+  # Tests never touch the network; specs that cover the DNS check stub the lookup.
+  config.x.check_email_dns = false
+
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable
 

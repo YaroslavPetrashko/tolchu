@@ -1,5 +1,6 @@
 <%# locals: (market:) %>
 <% phase = market.phase %>
+<% sealed = market.outcomes.any?(&:sealed_winner?) %>
 <%= tag.article id: dom_id(market, :studio), class: [ "studio-card", "studio-card--#{phase}" ] do %>
   <header class="studio-card__header">
     <%= phase_badge(market) %>
@@ -19,6 +20,10 @@
     <% end %>
   </ul>
 
+  <% if sealed && !market.settled? %>
+    <p class="muted">The sealed result settles automatically when betting closes.</p>
+  <% end %>
+
   <% case phase %>
   <% when :open %>
     <div class="studio-card__actions">
@@ -27,13 +32,15 @@
                     form: { data: { turbo_confirm: "Cancel this market and refund every stake?" } } %>
     </div>
   <% when :locked %>
-    <%= form_with url: resolve_studio_market_path(market), method: :patch, class: "resolve-form" do |form| %>
-      <%= form.label :winning_outcome_id, "What happened?", for: dom_id(market, :winning_outcome) %>
-      <div class="resolve-form__row">
-        <%= form.select :winning_outcome_id, market.outcomes.map { |outcome| [ outcome.label, outcome.id ] },
-                        { include_blank: "Pick the result…" }, id: dom_id(market, :winning_outcome), required: true %>
-        <%= form.submit "Declare result", class: "btn btn--primary" %>
-      </div>
+    <% unless sealed %>
+      <%= form_with url: resolve_studio_market_path(market), method: :patch, class: "resolve-form" do |form| %>
+        <%= form.label :winning_outcome_id, "What happened?", for: dom_id(market, :winning_outcome) %>
+        <div class="resolve-form__row">
+          <%= form.select :winning_outcome_id, market.outcomes.map { |outcome| [ outcome.label, outcome.id ] },
+                          { include_blank: "Pick the result…" }, id: dom_id(market, :winning_outcome), required: true %>
+          <%= form.submit "Declare result", class: "btn btn--primary" %>
+        </div>
+      <% end %>
     <% end %>
     <div class="studio-card__actions">
       <%= button_to "Cancel market", cancel_studio_market_path(market), method: :patch, class: "btn btn--ghost",

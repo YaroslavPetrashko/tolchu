@@ -11,7 +11,7 @@ module Markets
         now = @now || Time.current
         fail!("Betting has already closed on this market") unless @market.accepting_bets?(now)
 
-        @market.update!(status: :locked, locked_at: now, locks_at: now)
+        @market.transition!(status: :locked, locked_at: now, locks_at: now)
         @market
       end
     end

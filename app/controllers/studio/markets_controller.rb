@@ -28,7 +28,8 @@ module Studio
 
     def lock
       result = Markets::Lock.call(market: @market)
-      redirect_with result, notice: "Betting is locked on “#{@market.question}”. Declare the result once the play is over."
+      next_step = @market.sealed_winner ? "The sealed result will settle automatically." : "Declare the result once the play is over."
+      redirect_with result, notice: "Betting is locked on “#{@market.question}”. #{next_step}"
     end
 
     def resolve

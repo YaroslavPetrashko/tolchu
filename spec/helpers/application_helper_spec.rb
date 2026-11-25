@@ -63,6 +63,32 @@ RSpec.describe ApplicationHelper do
     end
   end
 
+  describe "#bet_multiplier" do
+    let(:market) { create(:market) }
+    # Loaded fresh, the way a page loads it, so the pools include both bets.
+    let(:bet) { Bet.find(@bet_id) }
+
+    before do
+      @bet_id = place_bet(user: create(:user), market:, outcome: "Lands it", stake: 40).id
+      place_bet(user: create(:user), market:, outcome: "Bails", stake: 60)
+    end
+
+    it "shows what a pending bet would pay per credit right now" do
+      expect(helper.bet_multiplier(bet)).to eq(Rational(95, 40))
+      expect(helper.multiplier(helper.bet_multiplier(bet))).to eq("×2.38")
+    end
+
+    it "shows what a won bet actually paid per credit" do
+      bet.assign_attributes(status: :won, payout: 95)
+      expect(helper.bet_multiplier(bet)).to eq(Rational(95, 40))
+    end
+
+    it "shows ×1.00 for a refunded bet, which gets exactly its stake back" do
+      bet.assign_attributes(status: :refunded, payout: 40)
+      expect(helper.multiplier(helper.bet_multiplier(bet))).to eq("×1.00")
+    end
+  end
+
   describe "bet pad helpers" do
     it "maps outcomes to flick directions by count" do
       expect(helper.pad_directions(2)).to eq(%w[l r])

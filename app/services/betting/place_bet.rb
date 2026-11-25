@@ -10,6 +10,10 @@ module Betting
     def perform
       bet = Market.transaction do
         @market.lock!
+        # Take the bettor's row lock before the bet is inserted. The insert takes a shared lock on
+        # that row (foreign key), so two bets by one user on different markets would otherwise each
+        # hold the shared lock and deadlock when the wallet asks for the exclusive one.
+        @user.lock!
         outcome = @market.outcomes.find_by(id: @outcome_id) or fail!("Pick one of the outcomes before placing your bet")
 
         bet = @market.bets.build(user: @user, outcome:, stake: @stake)

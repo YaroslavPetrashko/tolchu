@@ -8,11 +8,17 @@ const FLICK_MIN_SPEED = 0.2
 const HAPTICS = { raise: 8, lower: [ 5, 25, 5 ], modeRaise: 10, modeLower: [ 6, 40, 6 ], fire: 20 }
 
 export default class extends Controller {
-  static targets = [ "section", "input", "button", "stakeLabel", "modeLabel", "modeButton" ]
-  static values = { pools: Object, totalPool: Number, rakeRate: Number, min: Number, max: Number }
+  static targets = [ "section", "input", "button", "submit", "stakeLabel", "modeLabel", "modeButton" ]
+  static values = { pools: Object, totalPool: Number, rakeRate: Number, min: Number, max: Number, refundableStake: Number }
 
   connect() {
     this.mode = 1
+    this.maximum = this.maxValue
+    this.budgetDisabled = new Set(this.maximum < this.minValue ? this.budgetButtons : [])
+    const wallet = document.getElementById("wallet-balance")
+    const balance = Number(wallet?.dataset.walletBalanceAmountValue)
+    if (Number.isInteger(balance) && balance >= 0) this.maximum = Math.min(100, balance + this.refundableStakeValue)
+    this.normalizeStake()
     this.element.classList.add("is-enhanced")
     this.render()
   }
@@ -23,24 +29,55 @@ export default class extends Controller {
   }
 
   get stake() {
-    const value = parseInt(this.inputTarget.value, 10)
-    return Number.isFinite(value) ? value : this.minValue
+    return this.inputTarget.valueAsNumber
   }
 
   set stake(value) {
-    this.inputTarget.value = Math.max(this.minValue, Math.min(this.maxValue, value))
+    this.inputTarget.value = Math.min(this.maximum, Math.max(this.minValue, value))
+  }
+
+  normalizeStake() {
+    this.inputTarget.max = this.maximum
+    this.stake = Number.isFinite(this.stake) ? Math.trunc(this.stake) : this.minValue
+  }
+
+  updateBalance({ detail: { balance } }) {
+    if (!Number.isInteger(balance) || balance < 0) return
+    const maximum = Math.min(100, balance + this.refundableStakeValue)
+    if (maximum === this.maximum) return
+    // A wallet update must not turn an invalid entry into a different valid bet.
+    const normalize = this.maximum < this.minValue || this.inputTarget.validity.valid
+    this.maximum = maximum
+    this.inputTarget.max = maximum
+    if (normalize || maximum < this.minValue) this.normalizeStake()
+    this.render()
+  }
+
+  get locked() {
+    return this.element.closest(".clip-card")?.classList.contains("is-locked")
+  }
+
+  get blocked() {
+    return this.waiting || this.locked || this.buttonTarget.disabled
+  }
+
+  get budgetButtons() {
+    return [ this.buttonTarget, this.submitTarget, ...this.modeButtonTargets ]
   }
 
   setMode({ params: { mode } }) {
+    if (this.blocked) return
     this.mode = mode
     buzz(mode > 0 ? HAPTICS.modeRaise : HAPTICS.modeLower)
     this.render()
   }
 
   startRamp() {
+    if (this.blocked || !this.inputTarget.validity.valid) return
     this.ramping = true
     const startedAt = Date.now()
     this.rampTimer = setInterval(() => {
+      if (this.blocked || !this.inputTarget.validity.valid) return this.cancel()
       const step = Date.now() - startedAt < FAST_RAMP_AFTER_MS ? 1 : 5
       const before = this.stake
       this.stake = before + this.mode * step
@@ -57,7 +94,7 @@ export default class extends Controller {
   }
 
   press(event) {
-    if (this.waiting || event.button > 0) return
+    if (this.blocked || !this.inputTarget.validity.valid || event.button > 0) return
     this.buttonTarget.setPointerCapture?.(event.pointerId)
     const point = { x: event.clientX, y: event.clientY, t: event.timeStamp }
     this.gesture = { start: point, samples: [ point ], direction: null, peakSpeed: 0 }
@@ -65,6 +102,7 @@ export default class extends Controller {
   }
 
   drag(event) {
+    if (this.blocked) return this.cancel()
     const gesture = this.gesture
     if (!gesture) return
     const point = { x: event.clientX, y: event.clientY, t: event.timeStamp }
@@ -84,6 +122,7 @@ export default class extends Controller {
   }
 
   release(event) {
+    if (this.blocked) return this.cancel()
     const gesture = this.gesture
     if (!gesture) return
     this.gesture = null
@@ -111,10 +150,14 @@ export default class extends Controller {
   }
 
   key(event) {
+    if (this.blocked) {
+      event.preventDefault()
+      return
+    }
     const steps = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }
     if (event.key in steps) {
       event.preventDefault()
-      this.stake = this.stake + steps[event.key]
+      if (this.inputTarget.validity.valid) this.stake = this.stake + steps[event.key]
       this.render()
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault()
@@ -147,6 +190,7 @@ export default class extends Controller {
   }
 
   step() {
+    if (this.blocked || !this.inputTarget.validity.valid) return
     const before = this.stake
     this.stake = before + this.mode
     if (this.stake !== before) buzz(this.mode > 0 ? HAPTICS.raise : HAPTICS.lower)
@@ -154,26 +198,45 @@ export default class extends Controller {
 
   fire(direction) {
     const section = this.sectionTargets.find((candidate) => candidate.dataset.dir === direction)
-    if (!section || this.waiting) return
+    if (!section || this.blocked) return
     section.querySelector("input[type=radio]").checked = true
-    this.waiting = true
+    if (!this.element.reportValidity()) return
     buzz(HAPTICS.fire)
-    this.render()
     this.element.requestSubmit()
   }
 
-  submitted(event) {
-    if (event.detail.success) return
+  submit(event) {
+    if (this.blocked) event.preventDefault()
+  }
+
+  submitting() {
+    this.gesture = null
+    this.stopRamp()
+    this.waiting = true
+    this.render()
+  }
+
+  submitted() {
     this.waiting = false
     this.render()
   }
 
   render() {
     const stake = this.stake
-    this.stakeLabelTarget.textContent = stake
-    this.modeLabelTarget.textContent = `${this.mode > 0 ? "▲" : "▼"} ${this.ramping ? (this.mode > 0 ? "raising" : "lowering") : "hold"}`
+    const label = Number.isFinite(stake) ? stake : "—"
+    this.stakeLabelTarget.textContent = label
+    this.modeLabelTarget.textContent = this.maximum < this.minValue ? "no credits" :
+      `${this.mode > 0 ? "▲" : "▼"} ${this.ramping ? (this.mode > 0 ? "raising" : "lowering") : "hold"}`
     this.buttonTarget.setAttribute("aria-label",
-      `Stake ${stake} credits. Flick toward an outcome to bet, hold to change the stake, or use the arrow keys.`)
+      `Stake ${label} credits. Flick toward an outcome to bet, hold to change the stake, or use the arrow keys.`)
+    this.budgetButtons.forEach((button) => {
+      if (this.maximum < this.minValue && !button.disabled) {
+        button.disabled = true
+        this.budgetDisabled.add(button)
+      } else if (this.maximum >= this.minValue && !this.locked && this.budgetDisabled.delete(button)) {
+        button.disabled = false
+      }
+    })
     this.modeButtonTargets.forEach((button) => {
       const on = Number(button.dataset.betPadModeParam) === this.mode
       button.classList.toggle("is-on", on)
@@ -185,9 +248,9 @@ export default class extends Controller {
     const aimed = this.gesture?.direction
     this.sectionTargets.forEach((section) => {
       const radio = section.querySelector("input[type=radio]")
-      const { multiple, payout } = this.estimate(radio.value, stake)
-      section.querySelector(".outcome__odds").textContent = `×${multiple.toFixed(2)}`
-      section.querySelector(".outcome__wins").textContent = `wins ${payout.toLocaleString()}`
+      const estimate = this.inputTarget.validity.valid ? this.estimate(radio.value, stake) : null
+      section.querySelector(".outcome__odds").textContent = estimate ? `×${estimate.multiple.toFixed(2)}` : "×—"
+      section.querySelector(".outcome__wins").textContent = estimate ? `wins ${estimate.payout.toLocaleString()}` : "wins —"
       section.classList.toggle("is-aimed", section.dataset.dir === aimed)
       section.classList.toggle("is-selected", radio.checked)
     })

@@ -44,6 +44,8 @@ Rails.application.configure do
   config.active_support.report_deprecations = false
 
   # A single dyno is enough for the MVP, so an in-process cache is fine. Move to Redis/Memcached when scaling out.
+  # Rate-limit counters (sign-in, sign-up, bets) live here too: they reset on every deploy or restart and
+  # aren't shared between dynos, so move to Redis, Memcached, or Solid Cache before adding a second dyno.
   config.cache_store = :memory_store
 
   # Replace the default in-process and non-durable queuing backend for Active Job.

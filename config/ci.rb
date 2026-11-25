@@ -11,6 +11,7 @@ CI.run do
 
   step "Tests: RSpec", "bundle exec rspec"
   step "Tests: Cucumber user stories", "bundle exec cucumber --format progress"
+  step "Tests: Coverage (90% lines)", "bin/coverage-check"
 
 
   # Optional: set a green GitHub commit status to unblock PR merge.

@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# Fails when merged RSpec + Cucumber line coverage is below the minimum (default 90%).
+# Run both suites first: it reads the merged report they leave in coverage/coverage.json.
+require "json"
+
+path = ENV.fetch("COVERAGE_REPORT") { File.expand_path("../coverage/coverage.json", __dir__) }
+abort "No coverage report at #{path}; run RSpec and Cucumber first" unless File.exist?(path)
+
+report = JSON.parse(File.read(path))
+suites = report.dig("meta", "command_names").to_a
+abort "coverage.json only has #{suites.inspect}; run RSpec and Cucumber first" unless (%w[RSpec Cucumber] - suites).empty?
+
+lines, branches = report["total"].values_at("lines", "branches").map { |total| total["percent"].floor(2) }
+minimum = Float(ENV.fetch("MIN_LINE_COVERAGE", "90"))
+
+if ENV["GITHUB_STEP_SUMMARY"]
+  summary = "### Merged coverage\n| Lines | Branches |\n|---|---|\n| #{lines}% | #{branches}% |\n"
+  File.write(ENV["GITHUB_STEP_SUMMARY"], summary, mode: "a")
+end
+
+abort "Line coverage #{lines}% is below #{minimum}%" if lines < minimum
+puts "Line coverage #{lines}% (minimum #{minimum}%), branch coverage #{branches}%"

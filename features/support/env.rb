@@ -1,3 +1,6 @@
+ENV["RAILS_ENV"] ||= "test"
+abort "Tests require RAILS_ENV=test (got #{ENV['RAILS_ENV'].inspect})" unless ENV["RAILS_ENV"] == "test"
+
 require "simplecov"
 SimpleCov.command_name "Cucumber"
 SimpleCov.start "rails"

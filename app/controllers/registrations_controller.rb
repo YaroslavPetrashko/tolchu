@@ -9,7 +9,7 @@ class RegistrationsController < ApplicationController
   end
 
   def create
-    @user = User.register(registration_params)
+    @user = User.sign_up(registration_params)
     if @user.persisted?
       start_new_session_for @user
       redirect_to after_authentication_url,

@@ -74,7 +74,7 @@ Demo accounts (password for all: `password123`):
 
 ## Running locally
 
-**Prerequisites:** Ruby 3.4.5 (see `.ruby-version`; `rbenv install 3.4.5`), PostgreSQL 14+, Bundler.
+**Prerequisites:** Ruby 3.4.13 (see `.ruby-version`; `rbenv install 3.4.13`), PostgreSQL 14+, Bundler.
 
 No local Postgres? Run it in Docker and point Rails at it:
 
@@ -104,6 +104,8 @@ the compiler at the 26.x SDK: `export SDKROOT=/Library/Developer/CommandLineTool
 
 ## Testing
 
+RSpec and Cucumber default to `RAILS_ENV=test`; their helpers reject other values before loading Rails. Use a dedicated test database connection, separate from development and production.
+
 ```sh
 bundle exec cucumber     # user stories (features/), 49 scenarios
 bundle exec rspec        # unit + request specs (spec/), 255 examples
@@ -111,9 +113,8 @@ open coverage/index.html # merged coverage from both suites
 bin/ci                   # everything CI runs: RuboCop, Brakeman, bundler-audit, importmap audit, RSpec, Cucumber
 ```
 
-Scenarios tagged `@javascript` (`features/feed/clip_player.feature`) run in headless Google Chrome, so they need
-Chrome installed. They cover what only a real browser can: the clip freezing, the countdown closing betting, the
-live payout estimate, and betting by flick or keyboard without a page load. The rest run without a browser.
+CI fails when merged line coverage drops below 90%. `bin/coverage-check` runs the same check locally after both
+suites; set `MIN_LINE_COVERAGE` to try another threshold.
 
 Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined).
 
@@ -123,12 +124,16 @@ Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined)
 |---|---|
 | `features/accounts/sign_up.feature` | Sign up and get 1,000 starting credits, with validation for duplicates and weak passwords |
 | `features/accounts/sign_in.feature` | Sign in/out, wrong password, protected pages redirect and return |
-| `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action (or at its halfway mark when no freeze point is set), stays frozen once betting closes, plays through once settled, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
+| `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
+| `features/feed/countdown_recovery.feature` | Server-based countdowns, bounded retries, background/cache recovery, and disabled betting after lock |
+| `features/feed/settlement_wallet.feature` | Winnings and refunds update the menu balance without leaving the feed |
 | `features/feed/browse_feed.feature` | Scroll clips with question, outcomes, and pool split. Ordering, locked and settled states, guests |
 | `features/betting/place_bet.feature` | Placing a prediction, stake cap, insufficient credits, one bet per market, hard lock, no self-betting |
+| `features/betting/pad_recovery.feature` | Recover from invalid input and lost connections, honor available credits across loaded cards, and reuse a stake when editing |
 | `features/betting/payouts.feature` | Pro-rata payouts, fee cap, no-contest refunds, creator reward scaled by contest score |
 | `features/studio/create_market.feature` | Creators post a clip market with a sealed answer, with validation |
 | `features/studio/settle_market.feature` | Lock before the play, declare the result, auto-lock, cancel and refund, only manage your own markets |
+| `features/studio/sealed_result.feature` | Automatically pay the published sealed answer at the deadline or after an early lock |
 | `features/wallet/track_predictions.feature` | Pending and settled predictions, a ledger entry for every credit movement |
 | `features/learn/how_it_works.feature` | Plain-English explainer of the parimutuel model |
 

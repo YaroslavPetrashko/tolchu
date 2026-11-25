@@ -1,11 +1,12 @@
+ENV["RAILS_ENV"] ||= "test"
+abort "Tests require RAILS_ENV=test (got #{ENV['RAILS_ENV'].inspect})" unless ENV["RAILS_ENV"] == "test"
+
 require "simplecov"
 SimpleCov.command_name "RSpec"
 SimpleCov.start "rails"
 
 require "spec_helper"
-ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
-abort("The Rails environment is running in production mode!") if Rails.env.production?
 require "rspec/rails"
 
 Rails.root.glob("spec/support/**/*.rb").sort_by(&:to_s).each { |file| require file }

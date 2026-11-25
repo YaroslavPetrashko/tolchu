@@ -60,6 +60,15 @@ class Market < ApplicationRecord
     resolved? || cancelled?
   end
 
+  # Records a step in the market's life (locked, resolved, cancelled) without
+  # re-running the publishing validations. Those say what a creator may post;
+  # a market that predates a rule change must still lock, pay out, and refund.
+  # Database constraints still apply.
+  def transition!(attributes)
+    assign_attributes(attributes)
+    save!(validate: false)
+  end
+
   def phase(now = Time.current)
     return status.to_sym if settled?
 

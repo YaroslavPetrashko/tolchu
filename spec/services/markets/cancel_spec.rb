@@ -39,4 +39,13 @@ RSpec.describe Markets::Cancel do
 
     expect(described_class.call(market:).error).to eq("This market has already been settled")
   end
+
+  it "still refunds a market that no longer passes the publishing rules" do
+    market.update_columns(video_url: "ftp://old-host/clip.mp4")
+    alice.bets.sole.update_columns(stake: Bet::MAX_STAKE + 50)
+
+    expect(described_class.call(market:)).to be_success
+    expect(market.reload).to be_cancelled
+    expect(alice.bets.sole).to be_refunded
+  end
 end

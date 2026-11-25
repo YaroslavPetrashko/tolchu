@@ -20,6 +20,8 @@ Bundler.require(*Rails.groups)
 
 module Tolchu
   class Application < Rails::Application
+    # Sign-up looks up the email's domain in DNS to refuse ones that can't receive mail.
+    config.x.check_email_dns = true
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 

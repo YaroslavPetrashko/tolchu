@@ -18,6 +18,13 @@ class Bet < ApplicationRecord
   validate :creator_cannot_bet_on_own_market, on: :create
   validate :market_must_be_accepting_bets, on: :create
 
+  # Records the result of a bet without re-running the placement validations,
+  # so a bet made under older limits can still be paid or refunded.
+  def settle!(status:, payout:)
+    assign_attributes(status:, payout:)
+    save!(validate: false)
+  end
+
   def net
     payout - stake if payout
   end

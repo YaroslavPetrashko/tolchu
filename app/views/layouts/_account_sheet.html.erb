@@ -5,7 +5,7 @@
       <button type="button" class="account-sheet__grip" data-action="sheet#close" aria-label="Close menu"></button>
       <% if Current.user %>
         <p class="account-sheet__balance">
-          <span id="wallet-balance"><%= Current.user.balance.to_fs(:delimited) %></span><span class="bet-pad__unit" aria-hidden="true">◎</span>
+          <%= render "layouts/wallet_balance", user: Current.user %><span class="bet-pad__unit" aria-hidden="true">◎</span>
           <span class="account-sheet__caption">credits · @<%= Current.user.username %></span>
         </p>
         <ul class="account-sheet__links" role="list">

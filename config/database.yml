@@ -57,6 +57,8 @@ development:
 test:
   <<: *default
   database: tolchu_test
+  # The concurrency specs run up to 8 threads, each on its own connection.
+  max_connections: 10
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is

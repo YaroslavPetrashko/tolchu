@@ -13,10 +13,12 @@ module Markets
         fail!("This market has already been settled") if @market.settled?
         fail!("Betting is still open. Lock the market before declaring the result") unless @market.awaiting_result?(now)
         winner = @market.outcomes.find_by(id: @winning_outcome_id) or fail!("Pick the outcome that actually happened")
+        sealed_winner = @market.sealed_winner
+        fail!("The result must match the sealed answer") if sealed_winner && winner.id != sealed_winner.id
 
         bets = @market.bets.includes(:user).order(:id).to_a
         settlement = settle(bets, winner)
-        @market.update!(
+        @market.transition!(
           status: :resolved,
           winning_outcome: winner,
           locked_at: @market.locked_at || @market.locks_at,
@@ -40,7 +42,7 @@ module Markets
 
         bets.each do |bet|
           payout = settlement.payout_for(bet.id)
-          bet.update!(payout:, status: bet_status(bet, winner, settlement))
+          bet.settle!(payout:, status: bet_status(bet, winner, settlement))
           next if payout.zero?
 
           bet.user.wallet.credit!(payout, kind: settlement.refunded? ? :refund : :payout, market: @market, bet:)

@@ -36,4 +36,12 @@ RSpec.describe Markets::Lock do
       expect(market.reload).to be_open
     end
   end
+
+  it "still locks a market that no longer passes the publishing rules" do
+    market = create(:market)
+    market.update_columns(video_url: "ftp://old-host/clip.mp4")
+
+    expect(described_class.call(market:)).to be_success
+    expect(market.reload).to be_locked
+  end
 end

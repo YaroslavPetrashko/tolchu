@@ -24,6 +24,17 @@ RSpec.describe User do
       expect(user.errors[:email_address]).to include("doesn't look like an email address")
     end
 
+    it "rejects email addresses whose domain has no real ending" do
+      %w[fan@localhost fan@gmail fan@gmail.c fan@-bad-.com fan@gmail..com].each do |address|
+        expect(build(:user, email_address: address)).not_to be_valid, "expected #{address} to be rejected"
+      end
+      expect(build(:user, email_address: "first.last+tag@mail.school.edu")).to be_valid
+    end
+
+    it "doesn't screen the domain unless asked to, so demo and existing accounts keep working" do
+      expect(build(:user, email_address: "fan@mailinator.com")).to be_valid
+    end
+
     it "enforces username uniqueness case-insensitively in the database too" do
       create(:user, username: "Hooper")
       duplicate = build(:user, username: "hooper")
@@ -68,6 +79,43 @@ RSpec.describe User do
 
       entry = user.ledger_entries.sole
       expect(entry).to have_attributes(kind: "starting_credits", amount: 1_000, balance_after: 1_000)
+    end
+
+    context "when screening the email at sign-up" do
+      def register_with(email_address)
+        described_class.sign_up(attributes.merge(email_address:))
+      end
+
+      it "refuses throwaway inbox services and grants no credits" do
+        user = register_with("rookie@mailinator.com")
+
+        expect(user).not_to be_persisted
+        expect(user.errors[:email_address]).to eq([ "can't be a temporary or disposable address" ])
+        expect(LedgerEntry.count).to eq(0)
+      end
+
+      it "refuses a domain that can't receive email" do
+        allow(Rails.configuration.x).to receive(:check_email_dns).and_return(true)
+        allow(EmailDomain).to receive(:from_address).and_return(instance_double(EmailDomain, disposable?: false, receives_mail?: false))
+
+        user = register_with("rookie@gmial-typo.com")
+
+        expect(user).not_to be_persisted
+        expect(user.errors[:email_address]).to eq([ "uses a domain that can't receive email. Check for a typo" ])
+      end
+
+      it "accepts an address whose domain receives email" do
+        allow(Rails.configuration.x).to receive(:check_email_dns).and_return(true)
+        allow(EmailDomain).to receive(:from_address).and_return(instance_double(EmailDomain, disposable?: false, receives_mail?: true))
+
+        expect(register_with("rookie@school.edu")).to be_persisted
+      end
+
+      it "reports a malformed address once, without looking up its domain" do
+        expect(EmailDomain).not_to receive(:from_address)
+
+        expect(register_with("not-an-email").errors[:email_address]).to eq([ "doesn't look like an email address" ])
+      end
     end
 
     it "returns an unsaved user with errors when the details are invalid" do

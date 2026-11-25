@@ -46,6 +46,23 @@ RSpec.describe "Registrations" do
       expect(response.body).to include("Password confirmation doesn&#39;t match Password")
     end
 
+    it "refuses a throwaway email address and creates nothing" do
+      params = valid_params.deep_merge(user: { email_address: "rookie@mailinator.com" })
+
+      expect { post registration_path, params: }.not_to change(User, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("Email can&#39;t be a temporary or disposable address")
+    end
+
+    it "refuses an email whose domain can't receive mail" do
+      allow(Rails.configuration.x).to receive(:check_email_dns).and_return(true)
+      allow(EmailDomain).to receive(:from_address).and_return(instance_double(EmailDomain, disposable?: false, receives_mail?: false))
+      params = valid_params.deep_merge(user: { email_address: "rookie@gmial-typo.com" })
+
+      expect { post registration_path, params: }.not_to change(User, :count)
+      expect(response.body).to include("Email uses a domain that can&#39;t receive email. Check for a typo")
+    end
+
     it "rejects a taken username regardless of case" do
       create(:user, username: "Rookie")
       post registration_path, params: valid_params

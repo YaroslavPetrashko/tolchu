@@ -28,3 +28,13 @@ Feature: Sign up for an account
   Scenario: Usernames can only use letters, numbers, and underscores
     When I sign up as "rookie fan!" with email "rookie@example.com" and password "password123"
     Then I should see "Username can only use letters, numbers, and underscores"
+
+  Scenario: Throwaway email addresses are refused
+    When I sign up as "rookie" with email "rookie@mailinator.com" and password "password123"
+    Then I should see "Email can't be a temporary or disposable address"
+    And I should not be signed in
+
+  Scenario: Addresses that aren't real emails are refused
+    When I sign up as "rookie" with email "rookie@gmail" and password "password123"
+    Then I should see "Email doesn't look like an email address"
+    And I should not be signed in
