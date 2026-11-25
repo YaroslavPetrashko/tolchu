@@ -103,6 +103,8 @@ the compiler at the 26.x SDK: `export SDKROOT=/Library/Developer/CommandLineTool
 
 ## Testing
 
+RSpec and Cucumber default to `RAILS_ENV=test`; their helpers reject other values before loading Rails. Use a dedicated test database connection, separate from development and production.
+
 ```sh
 bundle exec cucumber     # user stories (features/), 49 scenarios
 bundle exec rspec        # unit + request specs (spec/), 255 examples
