@@ -7,6 +7,42 @@ Given("{string} posted a playable clip {string} with outcomes {string} and {stri
     .update_columns(video_url: TEST_CLIP, freeze_at:)
 end
 
+Given("the clip for {string} has no freeze point") do |question|
+  market_named(question).update_columns(freeze_at: 0)
+end
+
+Given("the clip for {string} has a freeze point of {float} second(s)") do |question, freeze_at|
+  market_named(question).update_columns(freeze_at:)
+end
+
+Given("betting has closed on {string}") do |question|
+  result = Markets::Lock.call(market: market_named(question))
+  raise result.error if result.failure?
+end
+
+When("I replay the clip for {string}") do |question|
+  card = card_for(question)
+  card.find("button[aria-label='Replay clip']").click
+  # Wait until it is really playing again, so the next check can't pass on the old freeze.
+  expect(card.find("video").evaluate_script("this.currentTime")).to be < 1.4
+end
+
+Then("{string} should not take bets") do |question|
+  within(card_for(question)) do
+    expect(page).to have_css(".bet-pad__button--static", text: "Locked")
+    expect(page).to have_no_css("form.bet-pad--live")
+  end
+end
+
+Then("the clip for {string} should play through to the end") do |question|
+  expect(page).to have_css("article.clip-card.is-ended", text: question, wait: 10)
+
+  card = card_for(question)
+  expect(card[:class].split).not_to include("is-frozen")
+  video = card.find("video")
+  expect(video.evaluate_script("this.currentTime")).to be_within(0.15).of(video.evaluate_script("this.duration"))
+end
+
 When("I open the feed and keep it open") do
   visit root_path
   execute_script("window.tolchuSamePage = true")

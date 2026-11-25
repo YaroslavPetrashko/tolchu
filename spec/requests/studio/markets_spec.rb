@@ -87,6 +87,12 @@ RSpec.describe "Studio markets" do
 
         expect(response.body).to include("Publish market", "Outcome 1", "Outcome 4", "Betting window")
       end
+
+      it "says what happens when the freeze point is left at 0" do
+        get new_studio_market_path
+
+        expect(response.body).to include("Leave it at 0 and the clip stops at its halfway point.")
+      end
     end
 
     describe "POST /studio/markets" do
