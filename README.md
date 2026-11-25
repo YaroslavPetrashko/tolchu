@@ -124,6 +124,8 @@ Coverage: **97.8% of lines and 90.2% of branches** (RSpec and Cucumber combined)
 | `features/accounts/sign_up.feature` | Sign up and get 1,000 starting credits, with validation for duplicates and weak passwords |
 | `features/accounts/sign_in.feature` | Sign in/out, wrong password, protected pages redirect and return |
 | `features/feed/clip_player.feature` | In a real browser: the clip freezes before the action, betting closes at zero, the stake estimate updates, flick and keyboard bets land in place |
+| `features/feed/countdown_recovery.feature` | Server-based countdowns, bounded retries, background/cache recovery, and disabled betting after lock |
+| `features/feed/settlement_wallet.feature` | Winnings and refunds update the menu balance without leaving the feed |
 | `features/feed/browse_feed.feature` | Scroll clips with question, outcomes, and pool split. Ordering, locked and settled states, guests |
 | `features/betting/place_bet.feature` | Placing a prediction, stake cap, insufficient credits, one bet per market, hard lock, no self-betting |
 | `features/betting/pad_recovery.feature` | Recover from invalid input and lost connections, honor available credits across loaded cards, and reuse a stake when editing |

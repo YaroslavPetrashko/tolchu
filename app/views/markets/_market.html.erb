@@ -1,14 +1,16 @@
 <%# locals: (market:, viewer_bet: nil, context: "feed") %>
-<% phase = market.phase %>
+<% server_now = Time.current %>
+<% phase = market.phase(server_now) %>
 <%= tag.article id: dom_id(market),
       class: [ "clip-card", "clip-card--#{phase}", ("clip-card--review clip-card--#{viewer_bet.status}" if viewer_bet) ],
       data: {
         controller: "clip countdown",
         clip_freeze_at_value: market.freeze_at.to_f,
         clip_revealed_value: phase == :resolved,
-        countdown_locks_at_value: market.locks_at.iso8601,
+        countdown_locks_at_value: market.locks_at.iso8601(3),
         countdown_live_value: phase == :open,
         countdown_opens_at_value: market.created_at.iso8601,
+        countdown_server_now_value: server_now.iso8601(3),
         countdown_refresh_url_value: card_market_path(market, context:)
       } do %>
   <div class="clip-card__media">
@@ -31,4 +33,7 @@
 
   <%= render "markets/bet_pad", market:, viewer_bet:, context:, phase: %>
   <%= render "markets/bet_hint", market:, message: (flash[:bet_error] if flash[:bet_error_market_id] == market.id) %>
+  <div data-countdown-target="retry" hidden>
+    <button type="button" class="btn btn--small" data-action="countdown#retry">Retry update</button>
+  </div>
 <% end %>
